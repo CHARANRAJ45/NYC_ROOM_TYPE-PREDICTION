@@ -1,10 +1,18 @@
 from fastapi import FastAPI
-impot pandas as pd
-from pydantic import BaseModel
+import pandas as pd
+from pydantic import BaseModel, Field
+import joblib
+from fastapi.middleware.cors import CORSMiddleware
+
+
 app = FastAPI()
 
-
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 COLUMNS = ["latitude", "longitude", "price", "minimum_nights",
@@ -12,8 +20,9 @@ COLUMNS = ["latitude", "longitude", "price", "minimum_nights",
     "calculated_host_listings_count", "availability_365",
     "neighbourhood_group", "neighbourhood",]
 
-model = joblib.load("Model_pipeline.pkl")
+model = joblib.load("Model_Pipeline.pkl")  # Load the pre-trained model pipeline
 
+#Pydantic Model = the input validation
 class Features(BaseModel):
     latitude: float = Field(..., ge=-90, le=90, description="Latitude coordinate")
     longitude: float = Field(..., ge=-180, le=180, description="Longitude coordinate")
@@ -30,16 +39,15 @@ class Features(BaseModel):
 
 @app.get('/')
 def greet():
-    return "hellow guyss"
+    return "Hello Guyss"
 
-app.post('/predict')
-def predict(features:Features):
-    row=pd.DataFrame([features.dict()],columns=)
-    prediction = model.predict(row)
+
+@app.post('/predict')
+def predict(features: Features):
+    row = pd.DataFrame([features.dict()], columns=COLUMNS)
+    prediction  = model.predict(row)
     probability = model.predict_proba(row)
 
-
-    return{
-        "predicted_room_type": prediction[0],
-        "probability":probability.tolist()[0]
-    }
+    return {
+        "Predicted_room_type": prediction[0],
+        "Probability": probability.tolist()[0]}
